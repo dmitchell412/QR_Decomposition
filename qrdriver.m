@@ -26,11 +26,11 @@ d_R  = gpuArray( h_R );
 qrdptx = parallel.gpu.CUDAKernel('qrd.ptx', 'qrd.cu');
 threadsPerBlock = 256;
 npixel = nDim_image*nDim_image;
-ParallelGaussElimptx.ThreadBlockSize=[threadsPerBlock, 1, 1];
+qrdptx.ThreadBlockSize=[threadsPerBlock, 1, 1];
 %blocksPerGrid = (npixel + threadsPerBlock -1) / threadsPerBlock;
-%blocksPerGrid = (npixel  * threadsPerBlock - 1) / threadsPerBlock;
-%ParallelGaussElimptx.GridSize=[ceil(blocksPerGrid), 1, 1];
-ParallelGaussElimptx.GridSize=[256, 1, 1];
+blocksPerGrid = (npixel  * threadsPerBlock - 1) / threadsPerBlock;
+qrdptx.GridSize=[ceil(blocksPerGrid), 1, 1];
+%qrdptx.GridSize=[256, 1, 1];
 
 [daout,dQout,dRout] = feval(qrdptx,d_a,d_Q,d_R,nDim_image,nDim_matrix);
 
