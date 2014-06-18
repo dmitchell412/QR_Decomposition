@@ -4,7 +4,7 @@
 using namespace std;
 
 __device__
-void matrix_write(double *mat, int nDim)
+void matrix_print(double *mat, int nDim)
 {
 	for (int j = 0; j < nDim; ++j)
 	{
@@ -88,8 +88,8 @@ void gram_schmidt(
 	int const nDim_matrix)
 {
 	// Assign image pixels to blocks and threads
-	int i_image = blockDim.x*blockIdx.x + threadIdx.x;
-	if (i_image > nDim_image*nDim_image) return;
+	int i_image = blockDim.x * blockIdx.x + threadIdx.x;
+	if (i_image > nDim_image * nDim_image) return;
 
 	double *a = new double[nDim_matrix * nDim_matrix];
 	double *Q = new double[nDim_matrix * nDim_matrix];
@@ -125,27 +125,9 @@ void gram_schmidt(
 		}
 	}
 
-	delete[](u);
-	delete[](v);
+	delete[] u;
+	delete[] v;
 
 	pixel_mat_write(Q_image, R_image, Q, R, nDim_image, nDim_matrix, i_image);
 }
 
-/*
-int main()
-{
-	int nDim = 3;
-	double a[9] = { 1, 1, 0, 1, 0, 1, 0, 1, 1 };
-	double Q[9] = { 0 };
-	double R[9] = { 0 };
-	matrix_write(a, nDim);
-	matrix_write(Q, nDim);
-	matrix_write(R, nDim);
-	gram_schmidt(a, Q, R, nDim);
-	matrix_write(Q, nDim);
-	matrix_write(R, nDim);
-	transpose(R, nDim);
-	matrix_write(R, nDim);
-	return 0;
-}
-*/
