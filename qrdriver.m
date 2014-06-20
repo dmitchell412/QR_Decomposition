@@ -4,12 +4,15 @@ clear all
 close all
 format shortg
 
-nDim_image = 50;
-nDim_matrix = 8;
+tol = 0.0001;
+upbound = 1000;
+nDim_image = 2;
+nDim_matrix = 4;
 
-h_a = randn(nDim_matrix,nDim_matrix,nDim_image,nDim_image);
-h_Q = zeros(nDim_matrix,nDim_matrix,nDim_image,nDim_image);
-h_R = zeros(nDim_matrix,nDim_matrix,nDim_image,nDim_image);
+h_root = zeros(nDim_matrix,nDim_image,nDim_image);
+%h_a = randn(nDim_matrix,nDim_matrix,nDim_image,nDim_image);
+%h_Q = zeros(nDim_matrix,nDim_matrix,nDim_image,nDim_image);
+%h_R = zeros(nDim_matrix,nDim_matrix,nDim_image,nDim_image);
 
 %for i = 1:nDim_image
 %    for j = 1:nDim_image
@@ -17,10 +20,18 @@ h_R = zeros(nDim_matrix,nDim_matrix,nDim_image,nDim_image);
 %    end
 %end
 
+for i = 1:nDim_image
+    for j = 1:nDim_image
+        h_poly(:,i,j) = [1,-6,-72,-27];
+    end
+end
+
 % transfer data to device
-d_a  = gpuArray( h_a );
-d_Q  = gpuArray( h_Q );
-d_R  = gpuArray( h_R );
+d_poly  = gpuArray( h_poly );
+d_root  = gpuArray( h_root );
+%d_a  = gpuArray( h_a );
+%d_Q  = gpuArray( h_Q );
+%d_R  = gpuArray( h_R );
 
 qrdptx = parallel.gpu.CUDAKernel('qrd.ptx', 'qrd.cu');
 threadsPerBlock = 256;
@@ -33,7 +44,8 @@ qrdptx.GridSize=[blocksPerGrid, 1, 1];
 %qrdptx.GridSize=[ceil(blocksPerGrid), 1, 1];
 %qrdptx.GridSize=[256, 1, 1];
 
-[daout,dQout,dRout] = feval(qrdptx,d_a,d_Q,d_R,nDim_image,nDim_matrix);
+[dpolyout,drootout] = feval(qrdptx,d_poly,d_root,tol,upbound,nDim_image,nDim_matrix);
+%[daout,dQout,dRout] = feval(qrdptx,d_poly,d_Q,d_R,nDim_image,nDim_matrix);
 
 %for i=1:nDim_image
 %    for j=1:nDim_image
