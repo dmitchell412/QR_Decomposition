@@ -6,10 +6,11 @@ format shortg
 
 tol = 0.0001;
 upbound = 1000;
-nDim_image = 2;
+nDim_image = 4;
 nDim_matrix = 4;
 
-h_root = zeros(nDim_matrix,nDim_image,nDim_image);
+h_root = zeros(nDim_matrix-1,nDim_image,nDim_image);
+h_poly = randn(nDim_matrix,nDim_image,nDim_image);
 %h_a = randn(nDim_matrix,nDim_matrix,nDim_image,nDim_image);
 %h_Q = zeros(nDim_matrix,nDim_matrix,nDim_image,nDim_image);
 %h_R = zeros(nDim_matrix,nDim_matrix,nDim_image,nDim_image);
@@ -20,11 +21,11 @@ h_root = zeros(nDim_matrix,nDim_image,nDim_image);
 %    end
 %end
 
-for i = 1:nDim_image
-    for j = 1:nDim_image
-        h_poly(:,i,j) = [1,-6,-72,-27];
-    end
-end
+%for i = 1:nDim_image
+%    for j = 1:nDim_image
+%        h_poly(:,i,j) = [1,-6,-72,-27];
+%    end
+%end
 
 % transfer data to device
 d_poly  = gpuArray( h_poly );

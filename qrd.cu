@@ -67,10 +67,12 @@ void make_comp_mat(double *polynomial, double *companion, int nDim)
 	for (int i = 0; i < nDim * nDim; ++i)
 		companion[i] = 0;
 	for (int i = 0; i < nDim; ++i)
-		companion[i * nDim] = -polynomial[i/* + 1*/] / polynomial[0];
-	companion[0] = 0;
-	//for (int i = 0; i < nDim - 1; ++i)
-	for (int i = 1; i < nDim - 1; ++i)
+		companion[i * nDim] = -polynomial[i 
+		+ 1
+		] / polynomial[0];
+	//companion[0] = 0;
+	for (int i = 0; i < nDim - 1; ++i)
+	//for (int i = 1; i < nDim - 1; ++i)
 		companion[i * nDim + i + 1] = 1;
 }
 
@@ -176,11 +178,11 @@ __device__
 void root_find(
 	double *polynomial,
 	double *root,
-	int nDim,
+	int nDim_in,
 	double tolerance,
 	int upperbound)
 {
-	//--nDim;
+	int nDim = nDim_in - 1;
 	double *a = new double[nDim * nDim];
 	double *Q = new double[nDim * nDim];
 	double *R = new double[nDim * nDim];
@@ -221,11 +223,11 @@ void QRDRoot(
 	if (i_image > nDim_image * nDim_image) return;
 
 	double *polynomial = new double[(nDim_matrix) * (nDim_matrix)];
-	double *root = new double [nDim_matrix * nDim_matrix];
+	double *root = new double [(nDim_matrix - 1) * (nDim_matrix - 1)];
 
 	pixel_mat_select_1d(polynomial_image, polynomial, nDim_matrix, i_image);
 	root_find(polynomial, root, nDim_matrix, tolerance, upperbound);
-	pixel_mat_write_1d(root_image, root, nDim_matrix, i_image);
+	pixel_mat_write_1d(root_image, root, nDim_matrix - 1, i_image);
 
 	delete[] polynomial;
 	delete[] root;
