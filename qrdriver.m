@@ -6,11 +6,11 @@ format shortg
 
 tol = 0.0001;
 upbound = 1000;
-nDim_image = 4;
-nDim_matrix = 4;
+nDim_image = 1;
+nDim_matrix = 3;
 
-h_root = zeros(nDim_matrix-1,nDim_image,nDim_image);
-h_poly = randn(nDim_matrix,nDim_image,nDim_image);
+h_root = complex(zeros(nDim_matrix-1,nDim_image,nDim_image),zeros(nDim_matrix-1,nDim_image,nDim_image));
+h_poly = complex(randn(nDim_matrix,nDim_image,nDim_image),randn(nDim_matrix,nDim_image,nDim_image));
 %h_a = randn(nDim_matrix,nDim_matrix,nDim_image,nDim_image);
 %h_Q = zeros(nDim_matrix,nDim_matrix,nDim_image,nDim_image);
 %h_R = zeros(nDim_matrix,nDim_matrix,nDim_image,nDim_image);

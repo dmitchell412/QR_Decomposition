@@ -22,12 +22,12 @@ MATLABROOT	:= /opt/apps/matlab/2013a/
 
 MEX=$(MATLABROOT)/bin/mex
 MCC=$(MATLABROOT)/bin/mcc
-CUDADIR = /opt/apps/cuda/5.0/
+CUDADIR = /opt/apps/cuda/5.5/
 
 # The following are the definitions for each target individually.
 
 qrd.ptx:   qrd.cu
-	$(CUDADIR)/bin/nvcc -g -G -ptx -gencode=arch=compute_20,code=sm_20   qrd.cu
+	$(CUDADIR)/bin/nvcc -g -G -ptx -gencode=arch=compute_20,code=sm_20 -I$(CUDADIR)/cusplibrary/ qrd.cu
 
 driver:  driver.m 
 	$(MCC) -m $^ -o $@

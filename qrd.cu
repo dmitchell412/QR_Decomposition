@@ -1,16 +1,19 @@
 #include <stdio.h>
 #include <iostream>
 #include <math.h>
+#include <cusp/complex.h>
 using namespace std;
 
+typedef cusp::complex<double> cdouble;
+
 __device__
-void matrix_print(double *mat, int nDim)
+void matrix_print(cdouble *mat, int nDim)
 {
 	for (int j = 0; j < nDim; ++j)
 	{
 		for (int i = 0; i < nDim; ++i)
 		{
-			printf(" %8.3f", mat[j + i * nDim]);
+			printf(" %8.3f + %8.3fi", mat[j + i * nDim].real(), mat[j + i * nDim].imag());
 		}
 		printf("\n");
 	}
@@ -18,18 +21,25 @@ void matrix_print(double *mat, int nDim)
 }
 
 __device__
-double dotprod(double *vec1, double *vec2, int nDim)
+cdouble dotprod(cdouble *vec1, cdouble *vec2, int nDim)
 {
-	double x = 0;
+	cdouble x = 0;
+	cdouble tmp = 0;
 	for (int i = 0; i < nDim; ++i)
-		x += vec1[i] * vec2[i];
+	{
+		tmp.real(vec1[i].real());
+		tmp.imag(-vec1[i].imag());
+		/*tmp = vec1[i];
+		tmp.imag() = -vec1[i].imag();*/
+		x += tmp * vec2[i];
+	}
 	return x;
 }
 
 __device__
-double* matmult(double *mat1, double *mat2, int nDim)
+cdouble* matmult(cdouble *mat1, cdouble *mat2, int nDim)
 {
-	double *x = new double[nDim * nDim];
+	cdouble *x = new cdouble[nDim * nDim];
 	for (int i = 0; i < nDim * nDim; ++i)
 		x[i] = 0;
 	for (int k = 0; k < nDim; ++k)
@@ -40,19 +50,19 @@ double* matmult(double *mat1, double *mat2, int nDim)
 }
 
 __device__
-double l2norm(double *vec, int nDim)
+cdouble l2norm(cdouble *vec, int nDim)
 {
-	double x = 0;
+	cdouble x = 0;
 	for (int i = 0; i < nDim; ++i)
-		x += vec[i] * vec[i];
+		x += vec[i].real() * vec[i].real() + vec[i].imag() * vec[i].imag();
 	x = sqrt(x);
 	return x;
 }
 
 __device__
-void transpose(double *mat, int nDim)
+void transpose(cdouble *mat, int nDim)
 {
-	double *x = new double[nDim * nDim];
+	cdouble *x = new cdouble[nDim * nDim];
 	for (int i = 0; i < nDim * nDim; ++i)
 		x[i] = mat[i];
 	for (int j = 0; j < nDim; ++j)
@@ -62,22 +72,18 @@ void transpose(double *mat, int nDim)
 }
 
 __device__
-void make_comp_mat(double *polynomial, double *companion, int nDim)
+void make_comp_mat(cdouble *polynomial, cdouble *companion, int nDim)
 {
 	for (int i = 0; i < nDim * nDim; ++i)
 		companion[i] = 0;
 	for (int i = 0; i < nDim; ++i)
-		companion[i * nDim] = -polynomial[i 
-		+ 1
-		] / polynomial[0];
-	//companion[0] = 0;
+		companion[i * nDim] = -polynomial[i + 1] / polynomial[0];
 	for (int i = 0; i < nDim - 1; ++i)
-	//for (int i = 1; i < nDim - 1; ++i)
 		companion[i * nDim + i + 1] = 1;
 }
 
 __device__
-void select_diag(double *vector, double *matrix, int nDim)
+void select_diag(cdouble *vector, cdouble *matrix, int nDim)
 {
 	for (int i = 0; i < nDim; ++i)
 		vector[i] = matrix[i * nDim + i];
@@ -85,8 +91,8 @@ void select_diag(double *vector, double *matrix, int nDim)
 
 __device__
 void pixel_mat_select_1d(
-	double *a_image,
-	double *a,
+	cdouble *a_image,
+	cdouble *a,
 	int nDim_matrix,
 	int i_image)
 {
@@ -97,8 +103,8 @@ void pixel_mat_select_1d(
 
 __device__
 void pixel_mat_write_1d(
-	double *a_image,
-	double *a,
+	cdouble *a_image,
+	cdouble *a,
 	int nDim_matrix,
 	int i_image)
 {
@@ -111,8 +117,8 @@ void pixel_mat_write_1d(
 
 __device__
 void pixel_mat_select_2d(
-	double *a_image,
-	double *a,
+	cdouble *a_image,
+	cdouble *a,
 	int nDim_matrix,
 	int i_image)
 {
@@ -123,10 +129,10 @@ void pixel_mat_select_2d(
 
 __device__
 void pixel_mat_write_2d(
-	double *Q_image,
-	double *R_image,
-	double *Q,
-	double *R,
+	cdouble *Q_image,
+	cdouble *R_image,
+	cdouble *Q,
+	cdouble *R,
 	int nDim_matrix,
 	int i_image)
 {
@@ -139,11 +145,11 @@ void pixel_mat_write_2d(
 }
 
 __device__
-void gram_schmidt(double *a, double *Q, double *R, int nDim)
+void gram_schmidt(cdouble *a, cdouble *Q, cdouble *R, int nDim)
 {
-	double *u = new double[nDim];
-	double *v = new double[nDim];
-	double l2 = 0;
+	cdouble *u = new cdouble[nDim];
+	cdouble *v = new cdouble[nDim];
+	cdouble l2 = 0;
 	for (int i = 0; i < nDim * nDim; ++i)
 		Q[i] = R[i] = 0;
 	for (int i = 0; i < nDim; ++i)
@@ -176,16 +182,16 @@ void gram_schmidt(double *a, double *Q, double *R, int nDim)
 
 __device__
 void root_find(
-	double *polynomial,
-	double *root,
+	cdouble *polynomial,
+	cdouble *root,
 	int nDim_in,
 	double tolerance,
 	int upperbound)
 {
 	int nDim = nDim_in - 1;
-	double *a = new double[nDim * nDim];
-	double *Q = new double[nDim * nDim];
-	double *R = new double[nDim * nDim];
+	cdouble *a = new cdouble[nDim * nDim];
+	cdouble *Q = new cdouble[nDim * nDim];
+	cdouble *R = new cdouble[nDim * nDim];
 	int nTol = 0;
 	for (int i = 0; i < nDim; ++i)
 		root[i] = 0;
@@ -199,7 +205,8 @@ void root_find(
 		nTol = 0;
 		for (int j = 0; j < nDim; ++j)
 			for (int i = 0; i < nDim; ++i) {
-				if (i > j && fabs(a[i + j * nDim]) > tolerance) ++nTol; }
+				if (i > j && sqrt(a[i + j * nDim].real() * a[i + j * nDim].real() + 
+				a[i + j * nDim].imag() * a[i + j * nDim].imag()) > tolerance) ++nTol; }
 		if (nTol == 0) break;
 	}
 
@@ -212,8 +219,8 @@ void root_find(
 
 __global__
 void QRDRoot(
-	double *polynomial_image,
-	double *root_image,
+	cdouble *polynomial_image,
+	cdouble *root_image,
 	double const tolerance,
 	int const upperbound,
 	int const nDim_image,
@@ -222,8 +229,8 @@ void QRDRoot(
 	int i_image = blockDim.x * blockIdx.x + threadIdx.x;
 	if (i_image > nDim_image * nDim_image) return;
 
-	double *polynomial = new double[(nDim_matrix) * (nDim_matrix)];
-	double *root = new double [(nDim_matrix - 1) * (nDim_matrix - 1)];
+	cdouble *polynomial = new cdouble[(nDim_matrix) * (nDim_matrix)];
+	cdouble *root = new cdouble [(nDim_matrix - 1) * (nDim_matrix - 1)];
 
 	pixel_mat_select_1d(polynomial_image, polynomial, nDim_matrix, i_image);
 	root_find(polynomial, root, nDim_matrix, tolerance, upperbound);
