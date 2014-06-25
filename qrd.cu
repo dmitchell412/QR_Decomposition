@@ -91,19 +91,21 @@ void select_diag(cdouble *vector, cdouble *matrix, int nDim)
 
 __device__
 void pixel_mat_select_1d(
-	cdouble *a_image,
+	double *a_image_real,
+	double *a_image_imag,
 	cdouble *a,
 	int nDim_matrix,
 	int i_image)
 {
 	int offset_1d = i_image * nDim_matrix;
 	for (int i = 0; i < nDim_matrix; ++i)
-		a[i] = a_image[i + offset_1d];
+		a[i] = cdouble(a_image_real[i + offset_1d], a_image_imag[i + offset_1d]);
 }
 
 __device__
 void pixel_mat_write_1d(
-	cdouble *a_image,
+	double *a_image_real,
+	double *a_image_imag,
 	cdouble *a,
 	int nDim_matrix,
 	int i_image)
@@ -111,7 +113,8 @@ void pixel_mat_write_1d(
 	int offset_1d = i_image * nDim_matrix;
 	for (int i = 0; i < nDim_matrix; ++i)
 	{
-		a_image[i + offset_1d] = a[i];
+		a_image_real[i + offset_1d] = a[i].real();
+		a_image_imag[i + offset_1d] = a[i].imag();
 	}
 }
 
@@ -206,7 +209,8 @@ void root_find(
 		for (int j = 0; j < nDim; ++j)
 			for (int i = 0; i < nDim; ++i) {
 				if (i > j && sqrt(a[i + j * nDim].real() * a[i + j * nDim].real() + 
-				a[i + j * nDim].imag() * a[i + j * nDim].imag()) > tolerance) ++nTol; }
+					a[i + j * nDim].imag() * a[i + j * nDim].imag()) > tolerance) 
+					++nTol; }
 		if (nTol == 0) break;
 	}
 
@@ -219,8 +223,10 @@ void root_find(
 
 __global__
 void QRDRoot(
-	cdouble *polynomial_image,
-	cdouble *root_image,
+	double *polynomial_image_real,
+	double *polynomial_image_imag,
+	double *root_image_real,
+	double *root_image_imag,
 	double const tolerance,
 	int const upperbound,
 	int const nDim_image,
@@ -232,9 +238,10 @@ void QRDRoot(
 	cdouble *polynomial = new cdouble[(nDim_matrix) * (nDim_matrix)];
 	cdouble *root = new cdouble [(nDim_matrix - 1) * (nDim_matrix - 1)];
 
-	pixel_mat_select_1d(polynomial_image, polynomial, nDim_matrix, i_image);
+	pixel_mat_select_1d(polynomial_image_real, polynomial_image_imag, polynomial,
+		nDim_matrix, i_image);
 	root_find(polynomial, root, nDim_matrix, tolerance, upperbound);
-	pixel_mat_write_1d(root_image, root, nDim_matrix - 1, i_image);
+	pixel_mat_write_1d(root_image_real, root_image_imag, root, nDim_matrix - 1, i_image);
 
 	delete[] polynomial;
 	delete[] root;

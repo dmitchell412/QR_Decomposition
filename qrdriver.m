@@ -6,8 +6,8 @@ format shortg
 
 tol = 0.0001;
 upbound = 1000;
-nDim_image = 1;
-nDim_matrix = 3;
+nDim_image = 2;
+nDim_matrix = 4;
 
 h_root = complex(zeros(nDim_matrix-1,nDim_image,nDim_image),zeros(nDim_matrix-1,nDim_image,nDim_image));
 h_poly = complex(randn(nDim_matrix,nDim_image,nDim_image),randn(nDim_matrix,nDim_image,nDim_image));
@@ -45,7 +45,7 @@ qrdptx.GridSize=[blocksPerGrid, 1, 1];
 %qrdptx.GridSize=[ceil(blocksPerGrid), 1, 1];
 %qrdptx.GridSize=[256, 1, 1];
 
-[dpolyout,drootout] = feval(qrdptx,d_poly,d_root,tol,upbound,nDim_image,nDim_matrix);
+[dpolyrealout,dpolyimagout,drootrealout,drootimagout] = feval(qrdptx,real(d_poly),imag(d_poly),real(d_root),imag(d_root),tol,upbound,nDim_image,nDim_matrix);
 %[daout,dQout,dRout] = feval(qrdptx,d_poly,d_Q,d_R,nDim_image,nDim_matrix);
 
 %for i=1:nDim_image
