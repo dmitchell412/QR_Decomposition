@@ -48,6 +48,16 @@ qrdptx.GridSize=[blocksPerGrid, 1, 1];
 [dpolyrealout,dpolyimagout,drootrealout,drootimagout] = feval(qrdptx,real(d_poly),imag(d_poly),real(d_root),imag(d_root),tol,upbound,nDim_image,nDim_matrix);
 %[daout,dQout,dRout] = feval(qrdptx,d_poly,d_Q,d_R,nDim_image,nDim_matrix);
 
+hf_poly = gather(complex(dpolyrealout,dpolyimagout));
+hf_root = gather(complex(drootrealout,drootimagout));
+
+for i=1:nDim_image
+	for j=1:nDim_image
+		matsol(:,i,j)=roots(hf_poly(:,i,j));
+		xcheck=norm(hf_root(:,i,j)-matsol(:,i,j))
+	end
+end
+
 %for i=1:nDim_image
 %    for j=1:nDim_image
 %        xtest(:,i,j)=h_A(:,:,i,j)\h_b(:,i,j);

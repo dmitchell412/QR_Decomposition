@@ -25,10 +25,11 @@ cdouble dotprod(cdouble *vec1, cdouble *vec2, int nDim)
 	cdouble tmp = 0;
 	for (int i = 0; i < nDim; ++i)
 	{
-		tmp = vec1[i];
-		tmp.imag() = -vec1[i].imag();
+		tmp.real(vec1[i].real());
+		tmp.imag(-vec1[i].imag());
+		/*tmp = vec1[i];
+		tmp.imag() = -vec1[i].imag();*/
 		x += tmp * vec2[i];
-//printf("%f+%fi\n", x.real(), x.imag());
 	}
 	return x;
 }
@@ -54,9 +55,9 @@ cdouble l2norm(cdouble *vec, int nDim)
 	return x;
 }
 
-void transpose(double *mat, int nDim)
+void transpose(cdouble *mat, int nDim)
 {
-	double *x = new double[nDim * nDim];
+	cdouble *x = new cdouble[nDim * nDim];
 	for (int i = 0; i < nDim * nDim; ++i)
 		x[i] = mat[i];
 	for (int j = 0; j < nDim; ++j)
@@ -71,7 +72,6 @@ void make_comp_mat(cdouble *polynomial, cdouble *companion, int nDim)
 		companion[i] = 0;
 	for (int i = 0; i < nDim; ++i)
 		companion[i * nDim] = -polynomial[i + 1] / polynomial[0];
-		//companion[i + nDim * (nDim - 1)] = -polynomial[i + 1] / polynomial[0];
 	for (int i = 0; i < nDim - 1; ++i)
 		companion[i * nDim + i + 1] = 1;
 }
@@ -80,6 +80,60 @@ void select_diag(cdouble *vector, cdouble *matrix, int nDim)
 {
 	for (int i = 0; i < nDim; ++i)
 		vector[i] = matrix[i * nDim + i];
+}
+
+void pixel_mat_select_1d(
+	double *a_image_real,
+	double *a_image_imag,
+	cdouble *a,
+	int nDim_matrix,
+	int i_image)
+{
+	int offset_1d = i_image * nDim_matrix;
+	for (int i = 0; i < nDim_matrix; ++i)
+		a[i] = cdouble(a_image_real[i + offset_1d], a_image_imag[i + offset_1d]);
+}
+
+void pixel_mat_write_1d(
+	double *a_image_real,
+	double *a_image_imag,
+	cdouble *a,
+	int nDim_matrix,
+	int i_image)
+{
+	int offset_1d = i_image * nDim_matrix;
+	for (int i = 0; i < nDim_matrix; ++i)
+	{
+		a_image_real[i + offset_1d] = a[i].real();
+		a_image_imag[i + offset_1d] = a[i].imag();
+	}
+}
+
+void pixel_mat_select_2d(
+	cdouble *a_image,
+	cdouble *a,
+	int nDim_matrix,
+	int i_image)
+{
+	int offset_2d = i_image * nDim_matrix * nDim_matrix;
+	for (int i = 0; i < nDim_matrix * nDim_matrix; ++i)
+		a[i] = a_image[i + offset_2d];
+}
+
+void pixel_mat_write_2d(
+	cdouble *Q_image,
+	cdouble *R_image,
+	cdouble *Q,
+	cdouble *R,
+	int nDim_matrix,
+	int i_image)
+{
+	int offset_2d = i_image * nDim_matrix * nDim_matrix;
+	for (int i = 0; i < nDim_matrix * nDim_matrix; ++i)
+	{
+		Q_image[i + offset_2d] = Q[i];
+		R_image[i + offset_2d] = R[i];
+	}
 }
 
 void gram_schmidt(cdouble *a, cdouble *Q, cdouble *R, int nDim)
@@ -117,8 +171,14 @@ void gram_schmidt(cdouble *a, cdouble *Q, cdouble *R, int nDim)
 	delete[] v;
 }
 
-void root_find(cdouble *polynomial, cdouble *root, int nDim, double tolerance, int upperbound)
+void root_find(
+	cdouble *polynomial,
+	cdouble *root,
+	int nDim_in,
+	double tolerance,
+	int upperbound)
 {
+	int nDim = nDim_in - 1;
 	cdouble *a = new cdouble[nDim * nDim];
 	cdouble *Q = new cdouble[nDim * nDim];
 	cdouble *R = new cdouble[nDim * nDim];
@@ -136,7 +196,6 @@ matrix_print(a, nDim);
 		for (int j = 0; j < nDim; ++j)
 			for (int i = 0; i < nDim; ++i) {
 printf(" k=%i i=%i j=%i a[]=%f tol=%f nTol=%i \n",k,i,j,sqrt(a[i + j * nDim].real() * a[i + j * nDim].real() + a[i + j * nDim].imag() * a[i + j * nDim].imag()),tolerance,nTol);
-				//if (i > j && fabs(a[i + j * nDim]) > tolerance) ++nTol; }
 				if (i > j && sqrt(a[i + j * nDim].real() * a[i + j * nDim].real() + 
 					a[i + j * nDim].imag() * a[i + j * nDim].imag()) > tolerance) 
 					++nTol; }
@@ -154,7 +213,7 @@ int main()
 {
 	int nDim = 4;
 	double tolerance = 0.0001;
-	double upperbound = 10000;
+	double upperbound = 20;
 	cdouble *polynomial = new cdouble[nDim];
 	cdouble *root = new cdouble[nDim - 1];
 
@@ -169,72 +228,91 @@ int main()
 		printf(" %f + %fi", root[i].real(), root[i].imag());
 	printf("\n");
 
-	/*soln:	-0.8234 + 1.2525i
+	/* soln:-0.8234 + 1.2525i
 		-0.5960 - 0.7567i
 		 0.9035 + 0.1371i */
 
-	/*int nDim = 4;
-	double tolerance = 0.0001;
-	double upperbound = 10000;
-	cdouble *polynomial = new cdouble[nDim];
-	cdouble *root = new cdouble[nDim];
-	cdouble *comp = new cdouble[nDim * nDim];
-	cdouble *m1 = new cdouble[nDim * nDim];
-	cdouble *m2 = new cdouble[nDim * nDim];
-	cdouble *m3 = new cdouble[nDim * nDim];
-
-	polynomial[0].real()=1;polynomial[1].real()=-6;polynomial[2].real()=-72;polynomial[3].real()=-27;
-	polynomial[0].imag()=1;polynomial[1].imag()=-6;polynomial[2].imag()=-72;polynomial[3].imag()=-27;
-	root[0].real()=1;root[1].real()=-6;root[2].real()=-72;root[3].real()=-27;
-	root[0].imag()=1;root[1].imag()=-6;root[2].imag()=-72;root[3].imag()=-27;
-	cdouble product = dotprod(polynomial, root, nDim);
-	cdouble result = l2norm(polynomial, nDim);
-	printf("%f+%fi\n", result.real(), result.imag());*/
-	/*printf("%f+%fi\n", product.real(), product.imag());
-	matrix_print(polynomial, nDim);*/
-	/*for (int i = 0; i < nDim; ++i)
-		for (int j = 0; j < nDim; ++j)
-		{
-			m1[i + j * nDim].real() = nDim * j + i;
-			m1[i + j * nDim].imag() = nDim * j + i;
-			m2[i + j * nDim].real() = nDim * j + i;
-			m2[i + j * nDim].imag() = nDim * j + i;
-		}
-	m3 = matmult(m1, m2, nDim);
-	matrix_print(m1, nDim);
-	matrix_print(m2, nDim);
-	matrix_print(m3, nDim);*/
-
-	//make_comp_mat(polynomial, comp, nDim);
-	//matrix_print(comp, nDim);
-
-	//root_find(polynomial, root, nDim, tolerance, upperbound);
-	//for (int i = 0; i < nDim; ++i)
-	//	cout << " " << root[i] << endl;
-/*
-	int nDim = 5;
-	double a[6] = { 2, 2, 3, 4, 5, 6 };
-	double mat[25] = { 0 };
-	make_comp_mat(a, mat, nDim);
-	matrix_print(mat, nDim);
-	double b[9] = { 1, 2, 3, 4, 5, 6, 7, 8, 9 };
-	double c[3] = { 0, 0, 0 };
-	select_diag(c, b, 3);
-	matrix_print(c, 3);
-*/
-/*
-	int nDim = 3;
-	double a[9] = { 1, 1, 0, 1, 0, 1, 0, 1, 1 };
-	double Q[9] = { 0 };
-	double R[9] = { 0 };
-	matrix_print(a, nDim);
-	matrix_print(Q, nDim);
-	matrix_print(R, nDim);
-	gram_schmidt(a, Q, R, nDim);
-	matrix_print(Q, nDim);
-	matrix_print(R, nDim);
-	transpose(R, nDim);
-	matrix_print(R, nDim);
-*/
 	return 0;
 }
+
+/*
+void QRDRoot(
+	double *polynomial_image_real,
+	double *polynomial_image_imag,
+	double *root_image_real,
+	double *root_image_imag,
+	double const tolerance,
+	int const upperbound,
+	int const nDim_image,
+	int const nDim_matrix)
+{
+	int i_image = blockDim.x * blockIdx.x + threadIdx.x;
+	if (i_image > nDim_image * nDim_image) return;
+
+	cdouble *polynomial = new cdouble[(nDim_matrix) * (nDim_matrix)];
+	cdouble *root = new cdouble [(nDim_matrix - 1) * (nDim_matrix - 1)];
+
+	pixel_mat_select_1d(polynomial_image_real, polynomial_image_imag, polynomial,
+		nDim_matrix, i_image);
+	root_find(polynomial, root, nDim_matrix, tolerance, upperbound);
+	pixel_mat_write_1d(root_image_real, root_image_imag, root, nDim_matrix - 1, i_image);
+
+	delete[] polynomial;
+	delete[] root;
+}
+*/
+
+/*
+__global__
+void gram_schmidt(
+	double *a_image, 
+	double *Q_image, 
+	double *R_image,
+	int const nDim_image, 
+	int const nDim_matrix)
+{
+	// Assign image pixels to blocks and threads
+	int i_image = blockDim.x * blockIdx.x + threadIdx.x;
+	if (i_image > nDim_image * nDim_image) return;
+
+	double *a = new double[nDim_matrix * nDim_matrix];
+	double *Q = new double[nDim_matrix * nDim_matrix];
+	double *R = new double[nDim_matrix * nDim_matrix];
+	double *u = new double[nDim_matrix];
+	double *v = new double[nDim_matrix];
+	double l2 = 0;
+	for (int i = 0; i < nDim_matrix * nDim_matrix; ++i)
+		a[i] = Q[i] = R[i] = 0;
+	for (int i = 0; i < nDim_matrix; ++i)
+		u[i] = v[i] = 0;
+	
+	pixel_mat_select_2d(a_image, a, nDim_matrix, i_image);
+
+	for (int k = 0; k < nDim_matrix; ++k)
+	{
+		for (int i = 0; i < nDim_matrix; ++i)
+			u[i] = a[i + k * nDim_matrix];
+		for (int j = k - 1; j >= 0; --j)
+			for (int i = 0; i < nDim_matrix; ++i)
+				u[i] -= R[j + k * nDim_matrix] * Q[i + j * nDim_matrix];
+		l2 = l2norm(u, nDim_matrix);
+		for (int i = 0; i < nDim_matrix; ++i)
+			Q[i + k * nDim_matrix] = u[i] / l2;
+		for (int j = k; j < nDim_matrix; ++j)
+		{
+			for (int i = 0; i < nDim_matrix; ++i)
+			{
+				u[i] = a[i + j * nDim_matrix];
+				v[i] = Q[i + k * nDim_matrix];
+			}
+			R[k + j * nDim_matrix] = dotprod(u, v, nDim_matrix);
+		}
+	}
+
+	delete[] u;
+	delete[] v;
+
+	pixel_mat_write_2d(Q_image, R_image, Q, R, nDim_matrix, i_image);
+}
+*/
+
