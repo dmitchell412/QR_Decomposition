@@ -12,7 +12,7 @@ void matrix_print(cdouble *mat, int nDim)
 	{
 		for (int i = 0; i < nDim; ++i)
 		{
-			printf(" %8.3f + %8.3fi", mat[j + i * nDim].real(), mat[j + i * nDim].imag());
+			printf(" %8.3f + %8.3fi ", mat[j + i * nDim].real(), mat[j + i * nDim].imag());
 		}
 		printf("\n");
 	}
@@ -42,6 +42,7 @@ cdouble* matmult(cdouble *mat1, cdouble *mat2, int nDim)
 	for (int k = 0; k < nDim; ++k)
 		for (int j = 0; j < nDim; ++j)
 			for (int i = 0; i < nDim; ++i)
+				//j=2,k=1
 				x[j + k * nDim] += mat1[j + i * nDim] * mat2[i + k * nDim];
 	return x;
 }
@@ -148,14 +149,22 @@ void gram_schmidt(cdouble *a, cdouble *Q, cdouble *R, int nDim)
 
 	for (int k = 0; k < nDim; ++k)
 	{
-		for (int i = 0; i < nDim; ++i)
+		for (int i = 0; i < nDim; ++i) //{
 			u[i] = a[i + k * nDim];
+//printf(" u[%i]=%2.1f+%2.1fi; a[%i]=%2.1f+%2.1fi\n", i, u[i].real(), u[i].imag(), i+k*nDim, a[i+k*nDim].real(), a[i+k*nDim].imag()); }
+//printf("\n");
 		for (int j = k - 1; j >= 0; --j)
-			for (int i = 0; i < nDim; ++i)
+			for (int i = 0; i < nDim; ++i) //{
 				u[i] -= R[j + k * nDim] * Q[i + j * nDim];
+//printf(" u[%i]=%2.1f+%2.1fi; R[%i]=%2.1f+%2.1fi; Q[%i]=%2.1f+%2.1fi\n", i, u[i].real(), u[i].imag(), j+k*nDim, R[j+k*nDim].real(), R[j+k*nDim].imag(), i+j*nDim, Q[i+j*nDim].real(), Q[i+j*nDim].imag()); }
+//printf("\n");
 		l2 = l2norm(u, nDim);
-		for (int i = 0; i < nDim; ++i)
+//printf(" l2=%2.1f+%2.1fi\n", l2.real(), l2.imag());
+//printf("\n");
+		for (int i = 0; i < nDim; ++i) //{
 			Q[i + k * nDim] = u[i] / l2;
+//printf(" Q[%i]=%2.1f+%2.1fi; u[%i]=%2.1f+%2.1fi; l2=%2.1f+%2.1fi\n", i+k*nDim, Q[i+k*nDim].real(), Q[i+k*nDim].imag(), i, u[i].real(), u[i].imag(), l2.real(), l2.imag()); }
+//printf("\n");
 		for (int j = k; j < nDim; ++j)
 		{
 			for (int i = 0; i < nDim; ++i)
@@ -169,6 +178,17 @@ void gram_schmidt(cdouble *a, cdouble *Q, cdouble *R, int nDim)
 
 	delete[] u;
 	delete[] v;
+}
+
+void modified_gram_schmidt(cdouble *a, cdouble *Q, cdouble *R, int nDim)
+{
+	cdouble *u = new cdouble[nDim];
+	cdouble *v = new cdouble[nDim];
+	cdouble l2 = 0;
+	for (int i = 0; i < nDim * nDim; ++i)
+		Q[i] = R[i] = 0;
+	for (int i = 0; i < nDim; ++i)
+		u[i] = v[i] = 0;
 }
 
 void root_find(
@@ -211,6 +231,57 @@ matrix_print(a, nDim);
 
 int main()
 {
+	int nDim = 3;
+	cdouble *a = new cdouble[nDim * nDim];
+	cdouble *Q = new cdouble[nDim * nDim];
+	cdouble *R = new cdouble[nDim * nDim];
+
+	for (int i = 0; i < nDim * nDim; ++i)
+	{
+		if (i==0 || i==1 || i==3 || i==5 || i==7 || i==8) {
+			a[i].real() = 1;
+			a[i].imag() = 1;
+		}
+		else {
+			a[i].real() = 0;
+			a[i].imag() = 0;
+		}
+	}
+
+	/*for (int i = 0; i < nDim * nDim; ++i)
+	{
+		Q[i].real() = i;
+		Q[i].imag() = 4 - i;
+		R[i].real() = i + 1;
+		R[i].imag() = i - 3;
+	}*/
+
+	//for (int i = 0; i < nDim * nDim; ++i)
+	//	printf(" B[%i] = %f+%fi; C[%i] = %f+%fi\n", i, Q[i].real(), Q[i].imag(), i, R[i].real(), R[i].imag());
+
+	//cdouble tmp = dotprod(Q, R, nDim * nDim);
+	//printf("%f+%fi", tmp.real(), tmp.imag());
+
+	//cdouble tmp = l2norm(a, nDim * nDim);
+	//printf("%f+%fi", tmp.real(), tmp.imag());
+
+	//Q = matmult(a, a, nDim);
+	//matrix_print(a, nDim);
+	//matrix_print(Q, nDim);
+
+	gram_schmidt(a, Q, R, nDim);
+	matrix_print(Q, nDim);
+	matrix_print(R, nDim);
+
+	/*soln: Q:	-0.5-0.5i	0.2887+0.2887i	0.4082+0.4082i
+			-0.5-0.5i	-0.2887-0.2887i	-0.4082-0.4082i
+			0+0i		0.5774+0.5774i	-0.4082-0.4082i
+
+		R:	-2+0i		-1+0i		-1+0i
+			0+0i		1.7321+0i	0.5774+0i
+			0+0i		0+0i		-1.6330+0i	*/
+
+/*
 	int nDim = 4;
 	double tolerance = 0.0001;
 	double upperbound = 20;
@@ -227,6 +298,7 @@ int main()
 	for (int i = 0; i < nDim - 1; ++i)
 		printf(" %f + %fi", root[i].real(), root[i].imag());
 	printf("\n");
+*/
 
 	/* soln:-0.8234 + 1.2525i
 		-0.5960 - 0.7567i
