@@ -54,6 +54,17 @@ cdouble l2norm(cdouble *vec, int nDim)
 	return x;
 }
 
+cdouble* proj(cdouble *u, cdouble *v, int nDim)
+{
+	cdouble *x = new cdouble[nDim];
+	for (int i = 0; i < nDim; ++i)
+		x[i] = 0;
+	cdouble dp = dotprod(u, v, nDim) / dotprod(u, u, nDim);
+	for (int i = 0; i < nDim; ++i)
+		x[i] = dp * u[i];
+	return x;
+}
+
 void transpose(double *mat, int nDim)
 {
 	double *x = new double[nDim * nDim];
@@ -99,6 +110,44 @@ void gram_schmidt(cdouble *a, cdouble *Q, cdouble *R, int nDim)
 		for (int j = k - 1; j >= 0; --j)
 			for (int i = 0; i < nDim; ++i)
 				u[i] -= R[j + k * nDim] * Q[i + j * nDim];
+		l2 = l2norm(u, nDim);
+		for (int i = 0; i < nDim; ++i)
+			Q[i + k * nDim] = u[i] / l2;
+		for (int j = k; j < nDim; ++j)
+		{
+			for (int i = 0; i < nDim; ++i)
+			{
+				u[i] = a[i + j * nDim];
+				v[i] = Q[i + k * nDim];
+			}
+			R[k + j * nDim] = dotprod(u, v, nDim);
+		}
+	}
+
+	delete[] u;
+	delete[] v;
+}
+
+void modified_gram_schmidt(cdouble *a, cdouble *Q, cdouble *R, int nDim)
+{
+	cdouble *u = new cdouble[nDim];
+	cdouble *v = new cdouble[nDim];
+	cdouble l2 = 0;
+	for (int i = 0; i < nDim * nDim; ++i)
+		Q[i] = R[i] = 0;
+	for (int i = 0; i < nDim; ++i)
+		u[i] = v[i] = 0;
+
+	for (int k = 0; k < nDim; ++k)
+	{
+		for (int i = 0; i < nDim; ++i)
+			u[i] = a[i + k * nDim];
+		for (int j = k - 1; j >= 0; --j)
+			for (int i = 0; i < nDim; ++i)
+				u[i] -= u[i] * Q[i + j * nDim];
+//		for (int j = k - 1; j >= 0; --j)
+//			for (int i = 0; i < nDim; ++i)
+//				u[i] -= R[j + k * nDim] * Q[i + j * nDim];
 		l2 = l2norm(u, nDim);
 		for (int i = 0; i < nDim; ++i)
 			Q[i + k * nDim] = u[i] / l2;
