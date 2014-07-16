@@ -143,7 +143,7 @@ void modified_gram_schmidt(cdouble *a, cdouble *Q, cdouble *R, int nDim)
 	{
 		for (int i = 0; i < nDim; ++i)
 			u[i] = a[i + k * nDim];
-		for (int j = 0; j <= k - 1; ++j)
+		for (int j = 0; j < k; ++j)
 		{
 			for (int i = 0; i < nDim; ++i)
 				v[i] = Q[i + j * nDim];
@@ -205,6 +205,42 @@ matrix_print(a, nDim);
 
 int main()
 {
+	//int nDim = 3;
+	int nDim = 2;
+	int nTol;
+	double tolerance = 0.001;
+	double upperbound = 1000;
+	cdouble *a = new cdouble[nDim * nDim];
+	cdouble *Q = new cdouble[nDim * nDim];
+	cdouble *R = new cdouble[nDim * nDim];
+	cdouble *soln = new cdouble[nDim];
+
+	//a[0]=2;a[1]=1;a[2]=1;a[3]=1;a[4]=2;a[5]=1;a[6]=1;a[7]=1;a[8]=2;
+	a[0]=3;a[1]=4;a[2]=-2;a[3]=-1;
+matrix_print(a, nDim);
+	for (int k = 0; k < upperbound; ++k)
+	{
+		modified_gram_schmidt(a, Q, R, nDim);
+		a = matmult(R, Q, nDim);
+		nTol = 0;
+		for (int j = 0; j < nDim; ++j)
+			for (int i = 0; i < nDim; ++i) {
+printf(" k=%i i=%i j=%i a[%i,%i]=%f+%fi |a|=%f tol=%f nTol=%i \n",k,i,j,i,j,a[i+j*nDim].real(),a[i+j*nDim].imag(),sqrt(a[i + j * nDim].real() * a[i + j * nDim].real() + a[i + j * nDim].imag() * a[i + j * nDim].imag()),tolerance,nTol);
+				//if (i > j && fabs(a[i + j * nDim]) > tolerance) ++nTol; }
+				if (i > j && sqrt(a[i + j * nDim].real() * a[i + j * nDim].real() + 
+					a[i + j * nDim].imag() * a[i + j * nDim].imag()) > tolerance) 
+					++nTol; }
+		if (nTol == 0) break;
+	}
+matrix_print(a, nDim);
+	select_diag(soln, a, nDim);
+matrix_print(soln, nDim);
+
+delete[] a;
+delete[] Q;
+delete[] R;
+
+/*
 	int nDim = 4;
 	double tolerance = 0.0001;
 	double upperbound = 10000;
@@ -221,7 +257,7 @@ int main()
 	for (int i = 0; i < nDim - 1; ++i)
 		printf(" %f + %fi", root[i].real(), root[i].imag());
 	printf("\n");
-
+*/
 	/*soln:	-0.8234 + 1.2525i
 		-0.5960 - 0.7567i
 		 0.9035 + 0.1371i */
@@ -281,7 +317,7 @@ int main()
 	cdouble Q[9];
 	cdouble R[9];
 
-	for (int i = 0; i <= 8; ++i)
+	for (int i = 0; i < 9; ++i)
 	{
 		if (i==0||i==1||i==3||i==5||i==7||i==8)
 		{
@@ -303,7 +339,7 @@ int main()
 	matrix_print(Q, nDim);
 	matrix_print(R, nDim);
 
-	for (int i = 0; i <= 8; ++i)
+	for (int i = 0; i < 9; ++i)
 	{
 		if (i==0||i==1||i==3||i==5||i==7||i==8)
 		{
