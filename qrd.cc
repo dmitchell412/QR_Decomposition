@@ -132,6 +132,7 @@ void modified_gram_schmidt(cdouble *a, cdouble *Q, cdouble *R, int nDim)
 {
 	cdouble *u = new cdouble[nDim];
 	cdouble *v = new cdouble[nDim];
+	cdouble prj = 0;
 	cdouble l2 = 0;
 	for (int i = 0; i < nDim * nDim; ++i)
 		Q[i] = R[i] = 0;
@@ -142,12 +143,14 @@ void modified_gram_schmidt(cdouble *a, cdouble *Q, cdouble *R, int nDim)
 	{
 		for (int i = 0; i < nDim; ++i)
 			u[i] = a[i + k * nDim];
-		for (int j = k - 1; j >= 0; --j)
+		for (int j = 0; j <= k - 1; ++j)
+		{
 			for (int i = 0; i < nDim; ++i)
-				u[i] -= u[i] * Q[i + j * nDim];
-//		for (int j = k - 1; j >= 0; --j)
-//			for (int i = 0; i < nDim; ++i)
-//				u[i] -= R[j + k * nDim] * Q[i + j * nDim];
+				v[i] = Q[i + j * nDim];
+			prj = dotprod(v, u, nDim);
+			for (int i = 0; i < nDim; ++i)
+				u[i] -= prj * v[i];
+		}
 		l2 = l2norm(u, nDim);
 		for (int i = 0; i < nDim; ++i)
 			Q[i + k * nDim] = u[i] / l2;
@@ -166,8 +169,9 @@ void modified_gram_schmidt(cdouble *a, cdouble *Q, cdouble *R, int nDim)
 	delete[] v;
 }
 
-void root_find(cdouble *polynomial, cdouble *root, int nDim, double tolerance, int upperbound)
+void root_find(cdouble *polynomial, cdouble *root, int nDim_in, double tolerance, int upperbound)
 {
+	int nDim = nDim_in - 1;
 	cdouble *a = new cdouble[nDim * nDim];
 	cdouble *Q = new cdouble[nDim * nDim];
 	cdouble *R = new cdouble[nDim * nDim];
@@ -179,12 +183,12 @@ void root_find(cdouble *polynomial, cdouble *root, int nDim, double tolerance, i
 matrix_print(a, nDim);
 	for (int k = 0; k < upperbound; ++k)
 	{
-		gram_schmidt(a, Q, R, nDim);
+		modified_gram_schmidt(a, Q, R, nDim);
 		a = matmult(R, Q, nDim);
 		nTol = 0;
 		for (int j = 0; j < nDim; ++j)
 			for (int i = 0; i < nDim; ++i) {
-printf(" k=%i i=%i j=%i a[]=%f tol=%f nTol=%i \n",k,i,j,sqrt(a[i + j * nDim].real() * a[i + j * nDim].real() + a[i + j * nDim].imag() * a[i + j * nDim].imag()),tolerance,nTol);
+printf(" k=%i i=%i j=%i a[%i,%i]=%f+%fi |a|=%f tol=%f nTol=%i \n",k,i,j,i,j,a[i+j*nDim].real(),a[i+j*nDim].imag(),sqrt(a[i + j * nDim].real() * a[i + j * nDim].real() + a[i + j * nDim].imag() * a[i + j * nDim].imag()),tolerance,nTol);
 				//if (i > j && fabs(a[i + j * nDim]) > tolerance) ++nTol; }
 				if (i > j && sqrt(a[i + j * nDim].real() * a[i + j * nDim].real() + 
 					a[i + j * nDim].imag() * a[i + j * nDim].imag()) > tolerance) 
@@ -273,16 +277,49 @@ int main()
 */
 /*
 	int nDim = 3;
-	double a[9] = { 1, 1, 0, 1, 0, 1, 0, 1, 1 };
-	double Q[9] = { 0 };
-	double R[9] = { 0 };
+	cdouble a[9];
+	cdouble Q[9];
+	cdouble R[9];
+
+	for (int i = 0; i <= 8; ++i)
+	{
+		if (i==0||i==1||i==3||i==5||i==7||i==8)
+		{
+			a[i].real() = 1;
+			a[i].imag() = 1;
+		}
+		else
+		{
+			a[i].real() = 0;
+			a[i].imag() = 0;
+		}
+		Q[i].real() = Q[i].imag() = R[i].real() = R[i].imag() = 0;
+	}
+
 	matrix_print(a, nDim);
 	matrix_print(Q, nDim);
 	matrix_print(R, nDim);
 	gram_schmidt(a, Q, R, nDim);
 	matrix_print(Q, nDim);
 	matrix_print(R, nDim);
-	transpose(R, nDim);
+
+	for (int i = 0; i <= 8; ++i)
+	{
+		if (i==0||i==1||i==3||i==5||i==7||i==8)
+		{
+			a[i].real() = 1;
+			a[i].imag() = 1;
+		}
+		else
+		{
+			a[i].real() = 0;
+			a[i].imag() = 0;
+		}
+		Q[i].real() = Q[i].imag() = R[i].real() = R[i].imag() = 0;
+	}
+
+	modified_gram_schmidt(a, Q, R, nDim);
+	matrix_print(Q, nDim);
 	matrix_print(R, nDim);
 */
 	return 0;
