@@ -65,9 +65,9 @@ cdouble* proj(cdouble *u, cdouble *v, int nDim)
 	return x;
 }
 
-void transpose(double *mat, int nDim)
+void transpose(cdouble *mat, int nDim)
 {
-	double *x = new double[nDim * nDim];
+	cdouble *x = new cdouble[nDim * nDim];
 	for (int i = 0; i < nDim * nDim; ++i)
 		x[i] = mat[i];
 	for (int j = 0; j < nDim; ++j)
@@ -91,6 +91,66 @@ void select_diag(cdouble *vector, cdouble *matrix, int nDim)
 {
 	for (int i = 0; i < nDim; ++i)
 		vector[i] = matrix[i * nDim + i];
+}
+
+void hess(cdouble *H, cdouble *a, int nDim)
+{
+	cdouble *tmp = new cdouble[nDim];
+	cdouble *u = new cdouble[nDim];
+	cdouble nrm = 0;
+	cdouble c0 = 0;
+	cdouble c2 = 0;
+	//c0.real() = c0.imag() = c2.imag() = 0;
+	c2.real() = 2;
+//matrix_print(H, nDim);
+printf("0\n");
+	for (int k = 0; k < nDim * nDim; ++k)
+		H[k] = a[k];
+printf("0.5\n");
+	for (int k = 0; k < nDim - 2; ++k)
+	{
+matrix_print(H, nDim);
+		for (int j = 0; j < nDim; ++j)
+			tmp[j] = 0;
+printf("1\n");
+		for (int j = 0; j < nDim; ++j)
+			u[j] = 0;
+printf("2\n");
+		for (int j = k + 1; j < nDim; ++j)
+			u[j] = a[j + k * nDim];
+printf("3\n");
+		if (u[0].real() >= 0) nrm = l2norm(u, nDim);
+		else nrm = -l2norm(u, nDim);
+		u[0] -= nrm;
+		nrm = l2norm(u, nDim);
+printf("4\n");
+		for (int j = k + 1; j < nDim; ++j)
+			u[j] /= nrm;
+printf("5\n");
+		for (int j = k; j < nDim; ++j)
+			for (int i = k + 1; i < nDim; ++i)
+				tmp[j] += (u[i].real() - u[i].imag()) * H[i + j * nDim];
+printf("6\n");
+		for (int j = k; j < nDim; ++j)
+			for (int i = k + 1; i < nDim; ++i)
+{ printf("i=%i; j=%i; nDim=%i; H[%i]\n", i, j, nDim, i+j*nDim);
+				H[i + j * nDim] -= c2 * u[i] * tmp[j];
+}
+printf("7\n");
+		for (int j = 0; j < nDim; ++j)
+			tmp[j] = 0;
+printf("8\n");
+		for (int j = 0; j < nDim; ++j)
+			for (int i = k + 1; i < nDim; ++i)
+				tmp[j] += H[i + j * nDim] * u[i];
+printf("9\n");
+		for (int j = 0; j < nDim; ++j)
+			for (int i = k + 1; i < nDim; ++i)
+				H[i + j * nDim] -= c2 * tmp[i] * (u[j].real() - u[j].imag());
+printf("10\n");
+	}
+	delete[] tmp;
+	delete[] u;
 }
 
 void gram_schmidt(cdouble *a, cdouble *Q, cdouble *R, int nDim)
@@ -205,6 +265,19 @@ matrix_print(a, nDim);
 
 int main()
 {
+	int nDim = 4;
+	cdouble *a = new cdouble[nDim * nDim];
+	cdouble *H = new cdouble[nDim * nDim];
+	for (int i = 0; i < nDim * nDim; ++i)
+		a[i] = i;
+printf("wtf\n");
+	matrix_print(a, nDim);
+printf("prehess\n");	
+	hess(H, a, nDim);
+	matrix_print(H, nDim);
+	delete[] a;
+	delete[] H;
+/*
 	//int nDim = 3;
 	int nDim = 2;
 	int nTol;
@@ -244,7 +317,7 @@ matrix_print(soln, nDim);
 delete[] a;
 delete[] Q;
 delete[] R;
-
+*/
 /*
 	int nDim = 4;
 	double tolerance = 0.0001;
