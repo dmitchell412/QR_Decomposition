@@ -291,11 +291,6 @@ printf("prehess\n");
 	//a[0]=2;a[1]=1;a[2]=1;a[3]=1;a[4]=2;a[5]=1;a[6]=1;a[7]=1;a[8]=2;
 	a[0]=3;a[1]=4;a[2]=-2;a[3]=-1;
 matrix_print(a, nDim);
-	modified_gram_schmidt(a, Q, R, nDim);
-matrix_print(Q, nDim);
-matrix_print(R, nDim);
-a = matmult(Q, R, nDim);
-matrix_print(a, nDim);
 /*	for (int k = 0; k < upperbound; ++k)
 	{
 		modified_gram_schmidt(a, Q, R, nDim);
@@ -313,7 +308,7 @@ printf(" k=%i i=%i j=%i a[%i,%i]=%f+%fi |a|=%f tol=%f nTol=%i \n",k,i,j,i,j,a[i+
 matrix_print(a, nDim);
 	select_diag(soln, a, nDim);
 matrix_print(soln, nDim);
-*/
+
 delete[] a;
 delete[] Q;
 delete[] R;
