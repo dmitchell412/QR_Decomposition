@@ -36,28 +36,38 @@
 
 \begin{abstract}
 
-Abstract.
+Abstract. graphics processing unit (GPU)
 
 \end{abstract}
 
 \section*{Objectives}
 
-The objective for this tutorial was to write kernels to perform linear algebra techniques, such as Gaussian elimination and QR decomposition, on the GPU in order to accelerate the reconstruction algorithm as it calls these subroutines. My personal objectives were to become proficient with C++, MATLAB, and the CUDA programming toolkit.
+The objective for this tutorial was to write kernels to perform linear algebra techniques, such as Gaussian elimination and QR decomposition, on the GPU in order to accelerate an MR signal reconstruction algorithm as it calls these subroutines. My personal objectives were to become proficient with C++, MATLAB, the CUDA parallel computing platform, and computational methods and algorithms commonly employed in MR signal reconstruction.
 
 \section*{Background}
 
-Background.
+\subsection*{GPGPU Computing}
+General purpose graphics processing unit (GPGPU) computation is an ideal way to accelerate reconstruction, because many of the subroutines of reconstruction involve parallelizable tasks which may be run simultaneously rather than serially. Traditional computation is performed with a central processing unit (CPU), which typically accomplishes one task per processor core in a linear manner. Most modern CPUs possess multiple cores, so some limited parallel processing is available. GPUs, on the other hand, contain many more cores capable of running hundreds of threads in parallel. In recent years, this parallel processing power has been harnessed for computation in many scientific fields because of its ability to accelerate common programming tasks by as much as a hundredfold.
+
+For this application, a set of data is associated with each pixel of the image to be reconstructed. Calculations involving the data of one pixel may be performed independently of those for other pixels. Problems of this type are known as embarrassingly parallel. The computation is accelerated by performing calculations simultaneously on as many of the $256\times256$ pixels as possible. 
+
+\subsection*{Reconstruction Algorithm}
+
+\subsection*{Wavelets and Curvelets}
 
 \section*{Methods/Techniques}
 
-To find the roots of $N(z)$ and $D(z)$ the Companion matrix method can be used. It can be verified by direct computation that the so called Companion matrix
-\begin{equation}
-\label{eq:companionmat}
-\left(\begin{array}{ccccc}0 & 0 & \cdots & 0 & -c_0 \\1 & 0 & \cdots & 0 & -c_1 \\0 & 1 & \cdots & 0 & -c_2 \\\vdots & \vdots & \ddots & \vdots & \vdots \\0 & 0 & 0 & 1 & -c_{n-1}\end{array}\right)
-\end{equation}
-has the characteristic polynomial $p(t)=c_0+c_1 t + \cdots + c_{n-1} t^{n-1} + t^n$. Thus the eigenvalues of Eq. (\ref{eq:companionmat}) are the roots of $p(t)$. To find the eigenvalues the QR algorithm can  be used. The algorithm performs iterations of the form. 
+\subsection*{Root Solving by QR Decomposition}
+
+To find the roots of a polynomial the Companion matrix method can be used. It can be verified by direct computation that the so called Companion matrix
+$$\left(\begin{array}{ccccc}0 & 0 & \cdots & 0 & -c_0 \\1 & 0 & \cdots & 0 & -c_1 \\0 & 1 & \cdots & 0 & -c_2 \\\vdots & \vdots & \ddots & \vdots & \vdots \\0 & 0 & 0 & 1 & -c_{n-1}\end{array}\right)$$
+has the characteristic polynomial $p(t)=c_0+c_1 t + \cdots + c_{n-1} t^{n-1} + t^n$. Thus the eigenvalues of the companion matrix are the roots of $p(t)$. To find the eigenvalues the QR algorithm can be used. The algorithm performs iterations of the form. 
 $$A_{k+1} = R_{k} Q_{k},$$ 
-where $Q_k$ is an orthogonal matrix and $R_k$ an upper triangular matrix, such that $A_k = Q_k R_k$, i.e. the QR decomposition of $A_k$, and $A_0=A$. It can be shown, that $A_k$ has the same eigenvalues as $A$ and that it converges to a triangular matrix, the {\it Schur form}.  Thus, the eigenvalues of $A$ and be read off the diagonal of $A_k$ after convergence. Usually $A$ is transformed into a upper Hessenberg matrix to reduce the costs of the QR decomposition during each iteration. However in our case, where $p(t)$ is of very small degree direct computation should be sufficient. One method for performing QR decomposition is Gram-Schmidt orthonormalization. This is a process for orthonormalizing a set of vectors in an inner product space, and the algorithm facilitates QR decomposition when applied to the column vectors of a matrix. If projection is abbrevated such that $\mathrm{proj}_u(v)=\frac{\langle u,v \rangle}{\langle u,u \rangle}u$, then the set of vectors $v$ are transformed to the set of orthogonal vectors $u$ by the following process:
+where $Q_k$ is an orthogonal matrix and $R_k$ an upper triangular matrix, such that $A_k = Q_k R_k$, i.e. the QR decomposition of $A_k$, and $A_0=A$. It can be shown, that $A_k$ has the same eigenvalues as $A$ and that it converges to a triangular matrix, the {\it Schur form}.  Thus, the eigenvalues of $A$ and be read off the diagonal of $A_k$ after convergence.
+
+\subsection*{Gram-Schmidt Orthogonalization}
+
+One method for performing QR decomposition is Gram-Schmidt orthonormalization. This is a process for orthonormalizing a set of vectors in an inner product space, and the algorithm facilitates QR decomposition when applied to the column vectors of a matrix. If projection is abbrevated such that $\mathrm{proj}_u(v)=\frac{\langle u,v \rangle}{\langle u,u \rangle}u$, then the set of vectors $v$ are transformed to the set of orthogonal vectors $u$ by the following process:
 $$\begin{array}{l}
 u_1=v_1\\
 u_2=v_2-\mathrm{proj}_{u_1}(v_2)\\
@@ -90,13 +100,19 @@ u_k^{(k-2)}=u_k^{(k-3)}-\mathrm{proj}_{u_2}(u_k^{(k-3)})\\
 u_k^{(k-1)}=u_k^{(k-2)}-\mathrm{proj}_{u_2}(u_k^{(k-2)})\\
 \end{array}$$
 
+The GPU kernels were written in C++ with calls to functions from the CUDA toolkit. The kernel itself was driven by a main program written in MATLAB for debugging before integration into the reconstruction algorithm. The efficiency of parallel structure of the kernel was analyzed using Nvidia Visual Profiler, an application included with the CUDA toolkit to aid in the efficient parallelization of code. The Gram-Schmidt orthogonalization and root solving kernel and the MATLAB driver program are provided in Appendix A.
+
+\subsection*{The Francis Double-Shift Algorithm}
+
+\subsection*{Reconstruction Using Wavelets and Curvelets}
+
 \section*{Results}
 
-Results.
+The Gram-Schmidt orthogonalization kernel performs QR decomposition and has been parallelized successfully. The modified Gram-Schmidt algorithm reduces error and improves convergence as expected. However, certain matrices exist for which the Gram-Schmidt QR method does not converge, such as those which have roots that are complex conjugates of one another. 
 
 \section*{Discussion}
 
-Discussion.
+The utilization of the CUDA platform has accelerated the root solving procedure as predicted. Unfortunately, no algorithm yet exists which can universally solve for the eigenvalues of any matrix. However, the physical constraints of the problem may be such that only well-behaved matrices need to be solved. The Francis double-step algorithm allows convergence even for complex conjugate root pairs, so the number of matrices which result in divergent behavior is smaller than with the Gram-Schmidt QR method. The Francis algorithm, along with several tricks to accelerate convergence, is the same one that MATLAB uses to perform the calculations for its \texttt{eig()} function. Continuing my work on this project, I will refine the parallelization of these algorithms to use GPU resources more efficiently and run more quickly, as well as parallelizing other subroutines to be run on the GPU. Ultimately, accelerated reconstruction algorithms like this make many MR signal reconstruction methods more feasible.
 
 \begin{thebibliography}{9}
 
