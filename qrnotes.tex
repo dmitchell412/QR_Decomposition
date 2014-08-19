@@ -36,7 +36,7 @@
 
 \begin{abstract}
 
-Abstract. graphics processing unit (GPU)
+MR signal reconstruction can be accelerated by parallelizing as many tasks as possible during the reconstruction. The purpose of this tutorial was to use the CUDA parallel computing platform to create a kernel which parallelizes one of the reconstruction tasks: polynomial root solving. The Gram-Schmidt QR method was selected to accomplish this task due to its relative simplicity. The more complex Francis double-shift algorithm was investigated as an alternative. No numerical eigenvalue method guarantees convergence for every matrix, but the Francis algorithm converges for a larger set of problems. The kernel using the Gram-Schmidt method was integrated into the rest of the reconstruction algorithm. If the Gram-Schmidt method is insufficient for these purposes, the Francis algorithm kernel will be completed and used instead. Wavelet and curvelet transforms were also investigated for their use in reconstruction of sparse signals.
 
 \end{abstract}
 
@@ -53,7 +53,7 @@ For this application, a set of data is associated with each pixel of the image t
 
 \subsection*{Reconstruction Algorithm}
 
-\subsection*{Wavelets and Curvelets}
+This reconstruction process requires a quick and parallel method for solving for the roots of a polynomial. The Steiglitz-McBride algorithm is applied to the signal and returns the coefficients of the polynomial for each pixel. The numerical method used to solve for roots of a polynomial gernerally involves converting the polynomial into its companion matrix and solving for the eigenvalues. Two techniques for determining the eigenvalues of a matrix are described below, the Gram-Schmidt QR method and the Francis Double-Shift algorithm. All eigenvalue methods are iterative and converge to a solution after a sufficient number of iterations. Afterward, image values are computed from the eigenvalues, which are the roots of the polynomial.
 
 \section*{Methods/Techniques}
 
@@ -61,13 +61,13 @@ For this application, a set of data is associated with each pixel of the image t
 
 To find the roots of a polynomial the Companion matrix method can be used. It can be verified by direct computation that the so called Companion matrix
 $$\left(\begin{array}{ccccc}0 & 0 & \cdots & 0 & -c_0 \\1 & 0 & \cdots & 0 & -c_1 \\0 & 1 & \cdots & 0 & -c_2 \\\vdots & \vdots & \ddots & \vdots & \vdots \\0 & 0 & 0 & 1 & -c_{n-1}\end{array}\right)$$
-has the characteristic polynomial $p(t)=c_0+c_1 t + \cdots + c_{n-1} t^{n-1} + t^n$. Thus the eigenvalues of the companion matrix are the roots of $p(t)$. To find the eigenvalues the QR algorithm can be used. The algorithm performs iterations of the form. 
+has the characteristic polynomial $p(t)=c_0+c_1 t + \cdots + c_{n-1} t^{n-1} + t^n$. Thus the eigenvalues of the companion matrix are the roots of $p(t)$. To find the eigenvalues the QR algorithm can be used. The algorithm performs iterations of the form
 $$A_{k+1} = R_{k} Q_{k},$$ 
-where $Q_k$ is an orthogonal matrix and $R_k$ an upper triangular matrix, such that $A_k = Q_k R_k$, i.e. the QR decomposition of $A_k$, and $A_0=A$. It can be shown, that $A_k$ has the same eigenvalues as $A$ and that it converges to a triangular matrix, the {\it Schur form}.  Thus, the eigenvalues of $A$ and be read off the diagonal of $A_k$ after convergence.
+where $Q_k$ is an orthogonal matrix and $R_k$ an upper triangular matrix, such that $A_k = Q_k R_k$, i.e. the QR decomposition of $A_k$, and $A_0=A$. It can be shown, that $A_k$ has the same eigenvalues as $A$ and that it converges to a triangular matrix, the {\it Schur form}.  Thus, the eigenvalues of $A$ can be read off the diagonal of $A_k$ after convergence.
 
 \subsection*{Gram-Schmidt Orthogonalization}
 
-One method for performing QR decomposition is Gram-Schmidt orthonormalization. This is a process for orthonormalizing a set of vectors in an inner product space, and the algorithm facilitates QR decomposition when applied to the column vectors of a matrix. If projection is abbrevated such that $\mathrm{proj}_u(v)=\frac{\langle u,v \rangle}{\langle u,u \rangle}u$, then the set of vectors $v$ are transformed to the set of orthogonal vectors $u$ by the following process:
+One method for performing QR decomposition is Gram-Schmidt orthonormalization. This is a process for orthonormalizing a set of vectors in an inner product space, and the algorithm facilitates QR decomposition when applied to the column vectors of a matrix. If projection is abbreviated such that $\mathrm{proj}_u(v)=\frac{\langle u,v \rangle}{\langle u,u \rangle}u$, then the set of vectors $v$ are transformed to the set of orthogonal vectors $u$ by the following process:
 $$\begin{array}{l}
 u_1=v_1\\
 u_2=v_2-\mathrm{proj}_{u_1}(v_2)\\
@@ -104,7 +104,34 @@ The GPU kernels were written in C++ with calls to functions from the CUDA toolki
 
 \subsection*{The Francis Double-Shift Algorithm}
 
-\subsection*{Reconstruction Using Wavelets and Curvelets}
+The Francis Double-Shift algorithm requires first that the matrix be transformed to its upper Hessenberg form via Householder reflections. A significant limitation of this requirement is that it usually generates complete fill-in of sparse matrices. The Francis algorithm uses shifts along the matrix diagonal--denoted by $\sigma$--to accelerate the convergence of the matrix to \emph{Schur form}.
+$$\begin{array}{l}
+A_0-\sigma_1I=Q_1R_1\\
+A_1=R_1Q_1+\sigma_1I\\
+A_1-\sigma_2I=Q_2R_2\\
+A_2=R_2Q_2+\sigma_2I\\
+\end{array}$$
+The value of the shifts are adjusted each iteration so that $\sigma$ is close to one of the eigenvalues. The use of two shifts in each iteration allows the Francis algorithm to solve for complex conjugate pair eigenvalues. It also results in a "bulge" in the upper Hessenberg form of the matrix. 
+$$H''_{k-1}=\left[\begin{array}{ccccccc}
+\times & \times & \times & \times & \times & \times & \times \\
+\times & \times & \times & \times & \times & \times & \times \\
+0 & \times & \times & \times & \times & \times & \times \\
+0 & + & \times & \times & \times & \times & \times \\
+& + & + & \times & \times & \times & \times  \\
+&&&& \times & \times & \times \\
+&&&&& \times & \times \\
+\end{array}\right]$$
+Application of Householder reflectors "chase the bulge" down the matrix diagonal.
+$$H'''_{k-1}=\left[\begin{array}{ccccccc}
+\times & \times & \times & \times & \times & \times & \times \\
+\times & \times & \times & \times & \times & \times & \times \\
+& \times & \times & \times & \times & \times & \times \\
+& 0 & \times & \times & \times & \times & \times \\
+& 0 & + & \times & \times & \times & \times  \\
+&& + & + & \times & \times & \times \\
+&&&&& \times & \times \\
+\end{array}\right]$$
+This process will zero one of the elements on the subdiagonal, which is usually chosen so that the $2\times2$ matrix in the lower righthand corner is isolated and can be solved analytically. This allows the rest of the matrix to be deflated, reducing the problem. This procedure is iterated until all eigenvalues have been solved.
 
 \section*{Results}
 
@@ -112,7 +139,7 @@ The Gram-Schmidt orthogonalization kernel performs QR decomposition and has been
 
 \section*{Discussion}
 
-The utilization of the CUDA platform has accelerated the root solving procedure as predicted. Unfortunately, no algorithm yet exists which can universally solve for the eigenvalues of any matrix. However, the physical constraints of the problem may be such that only well-behaved matrices need to be solved. The Francis double-step algorithm allows convergence even for complex conjugate root pairs, so the number of matrices which result in divergent behavior is smaller than with the Gram-Schmidt QR method. The Francis algorithm, along with several tricks to accelerate convergence, is the same one that MATLAB uses to perform the calculations for its \texttt{eig()} function. Continuing my work on this project, I will refine the parallelization of these algorithms to use GPU resources more efficiently and run more quickly, as well as parallelizing other subroutines to be run on the GPU. Ultimately, accelerated reconstruction algorithms like this make many MR signal reconstruction methods more feasible.
+The utilization of the CUDA platform has accelerated the root solving procedure as predicted. Unfortunately, no algorithm yet exists which can universally solve for the eigenvalues of any matrix. However, the physical constraints of the problem may be such that only well-behaved matrices need to be solved. If the Gram-Schmidt QR method proves insufficient, the Francis double-step algorithm allows convergence even for complex conjugate root pairs, so the number of matrices which result in divergent behavior is smaller than with the Gram-Schmidt QR method. The Francis algorithm, along with several tricks to accelerate convergence, is the same one that MATLAB uses to perform the calculations for its \texttt{eig()} function. Continuing my work on this project, I will validate the performance of the QR kernel in the complete reconstruction algorithm, refine the parallelization of these algorithms to use GPU resources more efficiently and run more quickly, and parallelize other subroutines to be run on the GPU. I am also investigating the use of wavelets and curvelets in reconstruction of sparse signals.
 
 \begin{thebibliography}{9}
 
@@ -134,6 +161,13 @@ The utilization of the CUDA platform has accelerated the root solving procedure 
 	2010;
 	27(4):81-89.
 
+	\bibitem{francis61}
+	Francis JGF.
+	The QR transformation - Parts 1 and 2.
+	\emph{Computer J.}
+	1961;
+	4:265-271.
+
 	\bibitem{haack99}
 	Haack EM.
 	Magnetic Resonance Imaging: Physical Principles and Sequence Design.
@@ -150,6 +184,13 @@ The utilization of the CUDA platform has accelerated the root solving procedure 
 	Munshi A.
 	OpenCL Programming Guide.
 	2012.
+
+	\bibitem{parlett00}
+	Parlett BN.
+	The QR algorithm.
+	\emph{Computing Sci. Eng.}
+	2000;
+	2:38-42.
 
 	\bibitem{wright14}
 	Wright KL, Hamilton JI, Griswold MA, et al.
